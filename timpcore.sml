@@ -1597,40 +1597,34 @@ fun typeof (e, globals, functions, formals) =
 			else
 				raise TypeError "Array length arg is not an integer"
 		end
-		(* just need to make sure arg 'a' is an array? *)
+    		(* just need to make sure arg 'a' is an array? *)
       | ty (ASIZE a) = 
-	  	let 
-			val tau_a = ty a
-		in
-			if eqType(tau_a, ARRAYTY) 
-				tau_a
-			else raise TypeError "Argument is not an array"
-		end
-      | ty (AAT (a, i)) = 
-	  	let val tau_a = case ty a of
-			ARRAYTY tau => tau
-			| _   => raise TypeError "arg is not an array"
-			val tau_i = ty a 
-		in 
-			if eqType(tau_i, INTTY) then 
-				tau_a
-			else raise TypeError "Index argument is not an integer"
-		end
-
+        (case ty a of 
+            ARRAYTY _ => INTTY
+            | _ => raise TypeError "Argument is not an array")
+      | ty (AAT (a, i)) =
+        let val tau_a = case ty a of
+            ARRAYTY tau => tau
+            | _ => raise TypeError "arg is not an array"
+            val tau_i = ty a
+        in 
+            if eqType (tau_i, INTTY) then
+                tau_a
+            else raise TypeError "Index argument is not an integer"
+        end
       | ty (APUT (a, i, e)) = 
-	  	let val tau_a = case ty a of 
-			ARRAYTY tau => tau
-			| 		_   => raise TypeError "arg A is not an array"
-			val tau_i = ty a
-			val tau_e = ty e
-		in
-			if eqType(tau_i, INTTY) then 
-				if eqType(tau_a, tau_e) then
-					tau_e
-				else raise TypeError "Type of element does not match type of array"
-			else raise TypeError "Index argument is not an integer"
-		end
-
+        let val tau_a = case ty a of
+            ARRAYTY tau => tau
+            | _ => raise TypeError "arg A is not an Array"
+            val tau_i = ty a
+            val tau_e = ty e
+        in 
+            if eqType(tau_i, INTTY) then
+                if eqType(tau_a, tau_e) then
+                    tau_e
+                else raise TypeError "Type of element does not match type of array"
+            else raise TypeError "Index argument is not an integer"
+        end 
     (* type declarations for consistency checking *)
     val _ = op ty : exp -> ty
   in
