@@ -1602,7 +1602,16 @@ fun typeof (e, globals, functions, formals) =
 	  	case ty a of
 			ARRAYTY tau => INTTY
 			| _ => raise TypeError "Argument is not an array"
-      | ty (AAT (a, i)) = raise LeftAsExercise "AAT"
+      | ty (AAT (a, i)) = 
+	  	let val tau_a = case ty a of
+			ARRAYTY tau => tau
+			|		_   => raise TypeError "arg is not an array"
+			val tau_i = ty a 
+		in 
+			if eqType(tau_i, INTTY) then 
+				tau_a
+			else raise TypeError "Index argument is not an integer"
+		end 
       | ty (APUT (a, i, e)) = raise LeftAsExercise "APUT"
 
     (* type declarations for consistency checking *)
