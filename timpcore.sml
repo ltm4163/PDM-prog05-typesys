@@ -1588,8 +1588,17 @@ fun typeof (e, globals, functions, formals) =
           end
 
       (* function [[ty]], checks type of expression given $\itenvs$ ((prototype)) 348 *)
-      | ty (AMAKE (len, init)) = raise LeftAsExercise "AMAKE"
-      | ty (ASIZE a) = raise LeftAsExercise "ASIZE"
+      | ty (AMAKE (len, init)) = 
+	  	let val tau_len = ty len
+			val tau_init = ty init
+		in 
+			if eqType (tau_len, INTTY) then
+				ARRAYTY tau_init
+			else
+				raise TypeError "Array length arg is not an integer"
+		end
+			
+      | ty (ASIZE a) = raise LeftAsExercise "ASIiZE"
       | ty (AAT (a, i)) = raise LeftAsExercise "AAT"
       | ty (APUT (a, i, e)) = raise LeftAsExercise "APUT"
 
