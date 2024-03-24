@@ -1599,9 +1599,13 @@ fun typeof (e, globals, functions, formals) =
 		end
 		(* just need to make sure arg 'a' is an array? *)
       | ty (ASIZE a) = 
-	  	case ty a of
-			ARRAYTY tau => INTTY
-			| _ => raise TypeError "Argument is not an array"
+	  	let 
+			val tau_a = ty a
+		in
+			if eqType(tau_a, ARRAYTY) 
+				tau_a
+			else raise TypeError "Argument is not an array"
+		end
       | ty (AAT (a, i)) = 
 	  	let val tau_a = case ty a of
 			ARRAYTY tau => tau
