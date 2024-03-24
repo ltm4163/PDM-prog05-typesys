@@ -1597,8 +1597,11 @@ fun typeof (e, globals, functions, formals) =
 			else
 				raise TypeError "Array length arg is not an integer"
 		end
-			
-      | ty (ASIZE a) = raise LeftAsExercise "ASIiZE"
+		(* just need to make sure arg 'a' is an array? *)
+      | ty (ASIZE a) = 
+	  	case ty a of
+			ARRAYTY tau => INTTY
+			| _ => raise TypeError "Argument is not an array"
       | ty (AAT (a, i)) = raise LeftAsExercise "AAT"
       | ty (APUT (a, i, e)) = raise LeftAsExercise "APUT"
 
