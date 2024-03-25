@@ -1844,18 +1844,32 @@ val _ = op eqTypes : tyex list * tyex list -> bool
 (* type checking for {\tuscheme} ((prototype)) 366 *)
 fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
   let
-    fun ty (LITERAL (NUM n)) = raise LeftAsExercise "LITERAL/NUM"
-      | ty (LITERAL (BOOLV b)) = raise LeftAsExercise "LITERAL/BOOL"
-      | ty (LITERAL (SYM s)) = raise LeftAsExercise "LITERAL/SYM"
-      | ty (LITERAL NIL) = raise LeftAsExercise "LITERAL/NIL"
+    fun ty (LITERAL (NUM n)) = inttype
+      | ty (LITERAL (BOOLV b)) = booltype
+      | ty (LITERAL (SYM s)) = symtype
+      | ty (LITERAL NIL) = listtype tvA
       | ty (LITERAL (PAIR (h, t))) = raise LeftAsExercise "LITERAL/PAIR"
       | ty (LITERAL (CLOSURE _)) =
           raise TypeError "impossible -- CLOSURE literal"
       | ty (LITERAL (PRIMITIVE _)) =
           raise TypeError "impossible -- PRIMITIVE literal"
-      | ty (VAR x) = raise LeftAsExercise "VAR"
+      | ty (VAR x) = 
+        (find (x, Gamma) handle NotFound _ => find (x, Gamma))
       | ty (SET (x, e)) = raise LeftAsExercise "SET"
-      | ty (IFX (e1, e2, e3)) = raise LeftAsExercise "IFX"
+      | ty (IFX (e1, e2, e3)) =
+        let
+          val tau1 = ty e1
+          val tau2 = ty e2
+          val tau3 = ty e3
+        in 
+          if eqType (tau1, booltype) then
+            if eqType (tau2, tau3) then
+              tau2
+            else
+              raise TypeError ("Huh")
+          else
+            raise TypeError ("Huh")
+        end
       | ty (WHILEX (e1, e2)) = raise LeftAsExercise "WHILE"
       | ty (BEGIN es) = raise LeftAsExercise "BEGIN"
       | ty (LETX (LET, bs, body)) = raise LeftAsExercise "LETX/LET"
@@ -1875,7 +1889,21 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
 val _ = op typeof : exp * kind env * tyex env -> tyex
 fun typdef (d: def, Delta: kind env, Gamma: tyex env) : tyex env * string =
   case d of
-    VAL (name, e) => raise LeftAsExercise "VAL"
+    VAL (name, e) =>
+      if not (isbound (name, Delta)) then
+        let val tau = typeof (e, Delta, Gamma)
+        in (bind (name, tau, Gamma), typeString tau)
+        end
+      else
+        let
+          val tau' = find (name, Gamma)
+          val tau = typeof (e, Delta, Gamma)
+        in
+          if eqType (tau, tau') then
+            (Gamma, typeString tau)
+          else
+            raise TypeError ("Huh")
+        end
   | EXP e => typdef (VAL ("it", e), Delta, Gamma)
   | DEFINE (name, tau, lambda as (formals, body)) =>
       raise LeftAsExercise "DEFINE"
