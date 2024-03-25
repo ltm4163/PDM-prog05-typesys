@@ -1,2 +1,0 @@
-f : ((forall ['a] ('a -> 'a)) (int -> bool) int -> bool)
-#t : bool

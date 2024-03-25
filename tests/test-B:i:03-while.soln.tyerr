@@ -1,2 +1,0 @@
-#t : bool
-type error: Set variable x of type bool to value of type int

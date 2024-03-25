@@ -1,2 +1,0 @@
-fact : (int -> int)
-120 : int

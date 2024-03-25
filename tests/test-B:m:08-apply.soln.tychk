@@ -1,2 +1,0 @@
-f : (int -> (int -> int))
-3 : int

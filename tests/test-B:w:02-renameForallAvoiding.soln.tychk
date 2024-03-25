@@ -1,2 +1,0 @@
-flipApp : (forall ['b] ('b -> (forall ['a] (('b -> 'a) -> 'a))))
-id : (forall ['a] ('a -> 'a))

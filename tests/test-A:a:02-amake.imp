@@ -1,3 +1,0 @@
-(define int foo ([a : (array bool)]) 0)
-(val a (make-array 10 (= 0 0)))
-(foo a)

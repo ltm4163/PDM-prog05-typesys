@@ -1,2 +1,0 @@
-zero : ( -> int)
-0 : int

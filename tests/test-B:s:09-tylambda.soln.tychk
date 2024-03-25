@@ -1,1 +1,0 @@
-ok : (forall ['a 'b] ('b -> (forall ['a] int)))

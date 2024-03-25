@@ -1,1 +1,0 @@
-type error: Condition in if expression has type sym, which should be bool

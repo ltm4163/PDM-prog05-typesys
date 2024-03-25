@@ -1,1 +1,0 @@
-type error: in letrec, bogus is declared to have type (int -> bool) but has actual type (int -> int)

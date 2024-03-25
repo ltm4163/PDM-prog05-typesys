@@ -1,2 +1,0 @@
-add : (int int -> int)
-4 : int
