@@ -1,0 +1,3 @@
+pair : (forall ['a 'b] ('a 'b -> (pair 'a 'b)))
+fst : (forall ['a 'b] ((pair 'a 'b) -> 'a))
+snd : (forall ['a 'b] ((pair 'a 'b) -> 'b))

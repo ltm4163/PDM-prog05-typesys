@@ -1,0 +1,1 @@
+z : (forall ['a 'b] ((pair 'a 'b) -> (pair 'a 'b)))
