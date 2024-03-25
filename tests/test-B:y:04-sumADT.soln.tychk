@@ -1,0 +1,3 @@
+is-right? : (forall ['a 'b] ((sum 'a 'b) -> bool))
+(#f) : (sum (list int) (list bool))
+#t : bool
