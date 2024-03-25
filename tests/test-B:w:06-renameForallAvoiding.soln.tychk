@@ -1,0 +1,2 @@
+f : (forall ['a 'z] (forall ['b 'y] (forall ['c 'x] (forall ['d 'w] (forall ['e 'v] ('a 'b 'c 'd 'e -> ('z 'y 'x 'w 'v -> int)))))))
+f : (forall ['a 'b 'c 'd 'e] ('e 'd 'c 'b 'a -> (bool int bool int bool -> int)))
