@@ -1897,7 +1897,17 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
         in
             typeof(body, Delta, bindingsTy(bs, Gamma))
         end
-      | ty (LETX (LETSTAR, bs, body)) = raise LeftAsExercise "LETX/LETSTAR"
+      | ty (LETX (LETSTAR, bs, body)) = (* i think there's a simpler way to do this*)
+        let fun bindingsTyStar ([], tyenv) = tyenv
+            | bindingsTyStar ((var, exp)::tail, tyenv) =
+            let
+                val tyenv' = bind(var, ty(exp), tyenv)
+            in
+                bindingsTyStar(tail, tyenv')
+            end
+        in
+            typeof(body, Delta, bindingsTyStar(bs, Gamma))
+        end
       | ty (LETRECX (bs, body)) = raise LeftAsExercise "LETRECX"
       | ty (LAMBDA (formals, body)) = raise LeftAsExercise "LAMBDA"
       | ty (APPLY (f, actuals)) = raise LeftAsExercise "APPLY"
