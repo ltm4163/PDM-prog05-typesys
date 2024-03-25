@@ -1889,7 +1889,13 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
           else
             raise TypeError ("Huh")
         end
-      | ty (BEGIN es) = raise LeftAsExercise "BEGIN" 
+      | ty (BEGIN es) = (* can't figure out why this only passes 3/4*) 
+        let fun beginHelp (h::nil) = ty h
+            | beginHelp(h::tail) = (ty h; beginHelp(tail))
+            | beginHelp (nil) = unittype
+        in
+            beginHelp(es)
+        end
       | ty (LETX (LET, bs, body)) =
         let fun bindingsTy ((var, exp)::tail, tyenv) =
             bindingsTy (tail, bind(var, ty(exp), tyenv))
