@@ -1848,7 +1848,7 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
       | ty (LITERAL (BOOLV b)) = booltype
       | ty (LITERAL (SYM s)) = symtype
       | ty (LITERAL NIL) = listtype tvA
-      | ty (LITERAL (PAIR (h, t))) = raise LeftAsExercise "LITERAL/PAIR"
+      | ty (LITERAL (PAIR (h, t))) = pairtype (ty (LITERAL h), ty (LITERAL t))
       | ty (LITERAL (CLOSURE _)) =
           raise TypeError "impossible -- CLOSURE literal"
       | ty (LITERAL (PRIMITIVE _)) =
@@ -1889,8 +1889,14 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
           else
             raise TypeError ("Huh")
         end
-      | ty (BEGIN es) = raise LeftAsExercise "BEGIN"
-      | ty (LETX (LET, bs, body)) = raise LeftAsExercise "LETX/LET"
+      | ty (BEGIN es) = raise LeftAsExercise "BEGIN" 
+      | ty (LETX (LET, bs, body)) =
+        let fun bindingsTy ((var, exp)::tail, tyenv) =
+            bindingsTy (tail, bind(var, ty(exp), tyenv))
+            | bindingsTy (nil, tyenv) = tyenv
+        in
+            typeof(body, Delta, bindingsTy(bs, Gamma))
+        end
       | ty (LETX (LETSTAR, bs, body)) = raise LeftAsExercise "LETX/LETSTAR"
       | ty (LETRECX (bs, body)) = raise LeftAsExercise "LETRECX"
       | ty (LAMBDA (formals, body)) = raise LeftAsExercise "LAMBDA"
