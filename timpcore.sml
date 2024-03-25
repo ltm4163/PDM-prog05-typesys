@@ -1603,11 +1603,11 @@ fun typeof (e, globals, functions, formals) =
             ARRAYTY _ => INTTY
             | _ => raise TypeError "Argument is not an array")
       | ty (AAT (a, i)) =
-        let val tau_a = case ty a of
+        let val tau_a = (case ty a of
             ARRAYTY tau => tau
-            | _ => raise TypeError "arg is not an array"
-            val tau_i = ty a
-        in 
+            | _ => raise TypeError "arg is not an array")
+            val tau_i = ty i
+        in
             if eqType (tau_i, INTTY) then
                 tau_a
             else raise TypeError "Index argument is not an integer"
@@ -1616,7 +1616,7 @@ fun typeof (e, globals, functions, formals) =
         let val tau_a = case ty a of
             ARRAYTY tau => tau
             | _ => raise TypeError "arg A is not an Array"
-            val tau_i = ty a
+            val tau_i = ty i
             val tau_e = ty e
         in 
             if eqType(tau_i, INTTY) then
