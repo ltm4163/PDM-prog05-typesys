@@ -1855,7 +1855,16 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
           raise TypeError "impossible -- PRIMITIVE literal"
       | ty (VAR x) = 
         (find (x, Gamma) handle NotFound _ => find (x, Gamma))
-      | ty (SET (x, e)) = raise LeftAsExercise "SET"
+      | ty (SET (x, e)) = 
+        let
+          val tau_x = ty (VAR x)
+          val tau_e = ty e
+        in
+          if eqType (tau_x, tau_e) then
+            tau_x
+          else
+            raise TypeError ("Huh")
+        end
       | ty (IFX (e1, e2, e3)) =
         let
           val tau1 = ty e1
@@ -1870,7 +1879,16 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
           else
             raise TypeError ("Huh")
         end
-      | ty (WHILEX (e1, e2)) = raise LeftAsExercise "WHILE"
+      | ty (WHILEX (e1, e2)) = 
+        let
+          val tau1 = ty e1
+          val tau2 = ty e2
+        in
+          if eqType (tau1, booltype) then
+            unittype
+          else
+            raise TypeError ("Huh")
+        end
       | ty (BEGIN es) = raise LeftAsExercise "BEGIN"
       | ty (LETX (LET, bs, body)) = raise LeftAsExercise "LETX/LET"
       | ty (LETX (LETSTAR, bs, body)) = raise LeftAsExercise "LETX/LETSTAR"
