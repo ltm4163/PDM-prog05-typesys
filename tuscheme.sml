@@ -1909,7 +1909,24 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
             typeof(body, Delta, bindingsTyStar(bs, Gamma))
         end
       | ty (LETRECX (bs, body)) = raise LeftAsExercise "LETRECX"
-      | ty (LAMBDA (formals, body)) = raise LeftAsExercise "LAMBDA"
+      | ty (LAMBDA (formals, body)) = 
+        let fun bindTy ((var, typ)::tail, tyenv) =
+            bindTy(tail, bind(var, typ, tyenv))
+            | bindTy(nil, tyenv) = tyenv
+            fun tyList((var, typ)::lst) =
+                typ::tyList(lst)
+            | tyList(nil) = nil
+            fun asTypeRec((var, typ)::tail, kindenv) = 
+                (asType(typ, kindenv); asTypeRec(tail,kindenv))
+                | asTypeRec(nil, kindenv) = kindenv
+
+            val args = tyList(formals)
+            val kinds = asTypeRec(formals, Delta)
+            val exptype = typeof(body, Delta, bindTy(formals, Gamma))
+        in
+            FUNTY(args, exptype)
+        end
+            
       | ty (APPLY (f, actuals)) = raise LeftAsExercise "APPLY"
       | ty (TYLAMBDA (alphas, e)) = raise LeftAsExercise "TYLAMBDA"
       | ty (TYAPPLY (e, args)) = raise LeftAsExercise "TYAPPLY"
