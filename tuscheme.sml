@@ -1963,8 +1963,19 @@ fun typdef (d: def, Delta: kind env, Gamma: tyex env) : tyex env * string =
         end
   | EXP e => typdef (VAL ("it", e), Delta, Gamma)
   | DEFINE (name, tau, lambda as (formals, body)) =>
-      raise LeftAsExercise "DEFINE"
-  | VALREC (name, tau, e) => raise LeftAsExercise "VALREC"
+      typdef (VALREC (name, tau, LAMBDA (formals, body)), Delta, Gamma)
+  | VALREC (name, tau, e) => 
+      if not (isbound (name, Delta)) then
+        let val newenv = bind (name, tau, Gamma)
+            val tau_e = typeof (e, Delta, newenv)
+        in
+          (newenv, typeString tau_e)
+        end
+      else
+        raise TypeError ("Huh")
+
+
+
 (* type declarations for consistency checking *)
 val _ = op typdef : def * kind env * tyex env -> tyex env * string
 
