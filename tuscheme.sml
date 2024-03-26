@@ -1873,7 +1873,7 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
           if eqType (tau_x, tau_e) then
             tau_x
           else
-            raise TypeError ("Huh")
+            raise TypeError ("Invalid")
         end
       | ty (IFX (e1, e2, e3)) =
         let
@@ -1885,9 +1885,9 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
             if eqType (tau2, tau3) then
               tau2
             else
-              raise TypeError ("Huh")
+              raise TypeError ("Invalid")
           else
-            raise TypeError ("Huh")
+            raise TypeError ("Invalid")
         end
       | ty (WHILEX (e1, e2)) = 
         let
@@ -1897,7 +1897,7 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
           if eqType (tau1, booltype) then
             unittype
           else
-            raise TypeError ("Huh")
+            raise TypeError ("Invalid")
         end
       | ty (BEGIN es) = (* can't figure out why this only passes 3/4*) 
         let fun beginHelp (h::nil) = ty h
@@ -1993,7 +1993,7 @@ fun typdef (d: def, Delta: kind env, Gamma: tyex env) : tyex env * string =
           if eqType (tau, tau') then
             (Gamma, typeString tau)
           else
-            raise TypeError ("Huh")
+            raise TypeError ("Invalid")
         end
   | EXP e => typdef (VAL ("it", e), Delta, Gamma)
   | DEFINE (name, tau, lambda as (formals, body)) =>
@@ -2006,7 +2006,7 @@ fun typdef (d: def, Delta: kind env, Gamma: tyex env) : tyex env * string =
           (newenv, typeString tau_e)
         end
       else
-        raise TypeError ("Huh")
+        raise TypeError ("Invalid")
 
 
 
