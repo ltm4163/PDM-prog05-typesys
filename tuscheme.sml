@@ -1735,7 +1735,7 @@ fun tysubst (tau, varenv) =
   let
     (* definition of [[renameForallAvoiding]] for {\tuscheme} ((prototype)) 397 *)
     fun renameForallAvoiding (alphas, tau, captured) =
-      raise LeftAsExercise "renameForallAvoiding"
+        raise LeftAsExercise "renameForallAvoiding"
     (* type declarations for consistency checking *)
     val _ = op renameForallAvoiding : name list * tyex * name set -> tyex
     fun subst (TYVAR a) =
@@ -1847,7 +1847,7 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
     fun ty (LITERAL (NUM n)) = inttype
       | ty (LITERAL (BOOLV b)) = booltype
       | ty (LITERAL (SYM s)) = symtype
-      | ty (LITERAL NIL) = listtype tvA
+      | ty (LITERAL NIL) = unittype 
       | ty (LITERAL (PAIR (h, t))) = pairtype (ty (LITERAL h), ty (LITERAL t))
       | ty (LITERAL (CLOSURE _)) =
           raise TypeError "impossible -- CLOSURE literal"
@@ -1933,7 +1933,28 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
             FUNTY(args, exptype)
         end
             
-      | ty (APPLY (f, actuals)) = raise LeftAsExercise "APPLY"
+      | ty (APPLY (f, actuals)) =
+        let
+            val tau_fun = ty f
+            val tau_actuals = List.map ty actuals
+            val arg_types = case tau_fun of
+                            FUNTY (arg_types, _) => arg_types
+                          | _ => raise TypeError ("Expected a function type")
+        in
+            if length arg_types = length tau_actuals then
+                let
+                    val _ = ListPair.app (fn (expected, actual) =>
+                            if eqType (expected, actual) then ()
+                            else raise TypeError ("Argument type mismatch"))
+                            (arg_types, tau_actuals)
+            in
+                case tau_fun of
+                    FUNTY (_, res_type) => res_type
+                  | _ => raise TypeError ("Expected a function type")
+            end
+        else
+            raise TypeError ("Incorrect number of arguments")
+        end
       | ty (TYLAMBDA (alphas, e)) = 
         let val l = FORALL (alphas, ty e)
         in l
