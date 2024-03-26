@@ -1847,8 +1847,18 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
     fun ty (LITERAL (NUM n)) = inttype
       | ty (LITERAL (BOOLV b)) = booltype
       | ty (LITERAL (SYM s)) = symtype
-      | ty (LITERAL NIL) = unittype 
-      | ty (LITERAL (PAIR (h, t))) = pairtype (ty (LITERAL h), ty (LITERAL t))
+      | ty (LITERAL NIL) = unittype
+      | ty (LITERAL (PAIR (h, t))) = 
+        let
+            val tau_h = ty (LITERAL h)
+            val tau_t = ty (LITERAL t)
+        in
+        (* Assuming non-empty list is always monomorphic *)
+        if eqType (tau_t, listtype tvA) then
+            pairtype (tau_h, tau_t)
+        else
+            raise TypeError "Non-empty list literal must have a list type"
+        end
       | ty (LITERAL (CLOSURE _)) =
           raise TypeError "impossible -- CLOSURE literal"
       | ty (LITERAL (PRIMITIVE _)) =
