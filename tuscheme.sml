@@ -1934,7 +1934,10 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
         end
             
       | ty (APPLY (f, actuals)) = raise LeftAsExercise "APPLY"
-      | ty (TYLAMBDA (alphas, e)) = raise LeftAsExercise "TYLAMBDA"
+      | ty (TYLAMBDA (alphas, e)) = 
+        let val l = FORALL (alphas, ty e)
+        in l
+        end
       | ty (TYAPPLY (e, args)) = raise LeftAsExercise "TYAPPLY"
 
     (* type declarations for consistency checking *)
