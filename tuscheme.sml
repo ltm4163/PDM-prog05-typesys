@@ -1735,7 +1735,7 @@ fun tysubst (tau, varenv) =
   let
     (* definition of [[renameForallAvoiding]] for {\tuscheme} ((prototype)) 397 *)
     fun renameForallAvoiding (alphas, tau, captured) =
-      raise LeftAsExercise "renameForallAvoiding"
+        raise LeftAsExercise "renameForallAvoiding"
     (* type declarations for consistency checking *)
     val _ = op renameForallAvoiding : name list * tyex * name set -> tyex
     fun subst (TYVAR a) =
@@ -1844,26 +1844,131 @@ val _ = op eqTypes : tyex list * tyex list -> bool
 (* type checking for {\tuscheme} ((prototype)) 366 *)
 fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
   let
-    fun ty (LITERAL (NUM n)) = raise LeftAsExercise "LITERAL/NUM"
-      | ty (LITERAL (BOOLV b)) = raise LeftAsExercise "LITERAL/BOOL"
-      | ty (LITERAL (SYM s)) = raise LeftAsExercise "LITERAL/SYM"
-      | ty (LITERAL NIL) = raise LeftAsExercise "LITERAL/NIL"
-      | ty (LITERAL (PAIR (h, t))) = raise LeftAsExercise "LITERAL/PAIR"
+    fun ty (LITERAL (NUM n)) = inttype
+      | ty (LITERAL (BOOLV b)) = booltype
+      | ty (LITERAL (SYM s)) = symtype
+      | ty (LITERAL NIL) = unittype
+      | ty (LITERAL (PAIR (h, t))) = 
+        let
+            val tau_h = ty (LITERAL h)
+            val tau_t = ty (LITERAL t)
+        in
+        (* Assuming non-empty list is always monomorphic *)
+        if eqType (tau_t, listtype tvA) then
+            pairtype (tau_h, tau_t)
+        else
+            raise TypeError "Non-empty list literal must have a list type"
+        end
       | ty (LITERAL (CLOSURE _)) =
           raise TypeError "impossible -- CLOSURE literal"
       | ty (LITERAL (PRIMITIVE _)) =
           raise TypeError "impossible -- PRIMITIVE literal"
-      | ty (VAR x) = raise LeftAsExercise "VAR"
-      | ty (SET (x, e)) = raise LeftAsExercise "SET"
-      | ty (IFX (e1, e2, e3)) = raise LeftAsExercise "IFX"
-      | ty (WHILEX (e1, e2)) = raise LeftAsExercise "WHILE"
-      | ty (BEGIN es) = raise LeftAsExercise "BEGIN"
-      | ty (LETX (LET, bs, body)) = raise LeftAsExercise "LETX/LET"
-      | ty (LETX (LETSTAR, bs, body)) = raise LeftAsExercise "LETX/LETSTAR"
+      | ty (VAR x) = 
+        (find (x, Gamma) handle NotFound _ => find (x, Gamma))
+      | ty (SET (x, e)) = 
+        let
+          val tau_x = ty (VAR x)
+          val tau_e = ty e
+        in
+          if eqType (tau_x, tau_e) then
+            tau_x
+          else
+            raise TypeError ("Invalid")
+        end
+      | ty (IFX (e1, e2, e3)) =
+        let
+          val tau1 = ty e1
+          val tau2 = ty e2
+          val tau3 = ty e3
+        in 
+          if eqType (tau1, booltype) then
+            if eqType (tau2, tau3) then
+              tau2
+            else
+              raise TypeError ("Invalid")
+          else
+            raise TypeError ("Invalid")
+        end
+      | ty (WHILEX (e1, e2)) = 
+        let
+          val tau1 = ty e1
+          val tau2 = ty e2
+        in
+          if eqType (tau1, booltype) then
+            unittype
+          else
+            raise TypeError ("Invalid")
+        end
+      | ty (BEGIN es) = (* can't figure out why this only passes 3/4*) 
+        let fun beginHelp (h::nil) = ty h
+            | beginHelp(h::tail) = (ty h; beginHelp(tail))
+            | beginHelp (nil) = unittype
+        in
+            beginHelp(es)
+        end
+      | ty (LETX (LET, bs, body)) =
+        let fun bindingsTy ((var, exp)::tail, tyenv) =
+            bindingsTy (tail, bind(var, ty(exp), tyenv))
+            | bindingsTy (nil, tyenv) = tyenv
+        in
+            typeof(body, Delta, bindingsTy(bs, Gamma))
+        end
+      | ty (LETX (LETSTAR, bs, body)) = (* i think there's a simpler way to do this*)
+        let fun bindingsTyStar ([], tyenv) = tyenv
+            | bindingsTyStar ((var, exp)::tail, tyenv) =
+            let
+                val tyenv' = bind(var, ty(exp), tyenv)
+            in
+                bindingsTyStar(tail, tyenv')
+            end
+        in
+            typeof(body, Delta, bindingsTyStar(bs, Gamma))
+        end
       | ty (LETRECX (bs, body)) = raise LeftAsExercise "LETRECX"
-      | ty (LAMBDA (formals, body)) = raise LeftAsExercise "LAMBDA"
-      | ty (APPLY (f, actuals)) = raise LeftAsExercise "APPLY"
-      | ty (TYLAMBDA (alphas, e)) = raise LeftAsExercise "TYLAMBDA"
+      | ty (LAMBDA (formals, body)) = 
+        let fun bindTy ((var, typ)::tail, tyenv) =
+            bindTy(tail, bind(var, typ, tyenv))
+            | bindTy(nil, tyenv) = tyenv
+            fun tyList((var, typ)::lst) =
+                typ::tyList(lst)
+            | tyList(nil) = nil
+            fun asTypeRec((var, typ)::tail, kindenv) = 
+                (asType(typ, kindenv); asTypeRec(tail,kindenv))
+                | asTypeRec(nil, kindenv) = kindenv
+
+            val args = tyList(formals)
+            val kinds = asTypeRec(formals, Delta)
+            val exptype = typeof(body, Delta, bindTy(formals, Gamma))
+        in
+            FUNTY(args, exptype)
+        end
+            
+      | ty (APPLY (f, actuals)) =
+        let
+            val tau_fun = ty f
+            val tau_actuals = List.map ty actuals
+            val arg_types = case tau_fun of
+                            FUNTY (arg_types, _) => arg_types
+                          | _ => raise TypeError ("Expected a function type")
+        in
+            if length arg_types = length tau_actuals then
+                let
+                    val _ = ListPair.app (fn (expected, actual) =>
+                            if eqType (expected, actual) then ()
+                            else raise TypeError ("Argument type mismatch"))
+                            (arg_types, tau_actuals)
+            in
+                case tau_fun of
+                    FUNTY (_, res_type) => res_type
+                  | _ => raise TypeError ("Expected a function type")
+            end
+        else
+            raise TypeError ("Incorrect number of arguments")
+        end
+      | ty (TYLAMBDA (alphas, e)) = 
+        let val l = FORALL (alphas, ty e)
+        in l
+        end
       | ty (TYAPPLY (e, args)) = raise LeftAsExercise "TYAPPLY"
 
     (* type declarations for consistency checking *)
@@ -1875,11 +1980,36 @@ fun typeof (e: exp, Delta: kind env, Gamma: tyex env) : tyex =
 val _ = op typeof : exp * kind env * tyex env -> tyex
 fun typdef (d: def, Delta: kind env, Gamma: tyex env) : tyex env * string =
   case d of
-    VAL (name, e) => raise LeftAsExercise "VAL"
+    VAL (name, e) =>
+      if not (isbound (name, Delta)) then
+        let val tau = typeof (e, Delta, Gamma)
+        in (bind (name, tau, Gamma), typeString tau)
+        end
+      else
+        let
+          val tau' = find (name, Gamma)
+          val tau = typeof (e, Delta, Gamma)
+        in
+          if eqType (tau, tau') then
+            (Gamma, typeString tau)
+          else
+            raise TypeError ("Invalid")
+        end
   | EXP e => typdef (VAL ("it", e), Delta, Gamma)
   | DEFINE (name, tau, lambda as (formals, body)) =>
-      raise LeftAsExercise "DEFINE"
-  | VALREC (name, tau, e) => raise LeftAsExercise "VALREC"
+      typdef (VALREC (name, tau, LAMBDA (formals, body)), Delta, Gamma)
+  | VALREC (name, tau, e) => 
+      if not (isbound (name, Delta)) then
+        let val newenv = bind (name, tau, Gamma)
+            val tau_e = typeof (e, Delta, newenv)
+        in
+          (newenv, typeString tau_e)
+        end
+      else
+        raise TypeError ("Invalid")
+
+
+
 (* type declarations for consistency checking *)
 val _ = op typdef : def * kind env * tyex env -> tyex env * string
 
